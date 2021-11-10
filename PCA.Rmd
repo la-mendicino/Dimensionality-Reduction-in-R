@@ -1,0 +1,181 @@
+---
+title: "PCA"
+author: "Lucas Mendicino"
+date: "11/10/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(ggcorrplot)
+library(FactoMineR)
+```
+
+```{r}
+summary(mtcars)
+```
+
+```{r}
+correl <- cor(mtcars, use = "complete.obs")
+```
+
+```{r}
+ggcorrplot_clustered <- ggcorrplot(correl, hc.order = TRUE, type = "lower")
+ggcorrplot_clustered
+```
+
+```{r}
+mtcars_pca <- PCA(mtcars)
+```
+Factor map: first PC
+-  cyl, disp, wt take positive values
+- mpg takes negative values
+1st PC separates cars that are powerful and heavy on the right side and cars that are economical on the left side
+2nd PC: speed
+- cars with lots of gears are placed higher
+- qsec takes lower values
+
+```{r}
+summary(mtcars_pca)
+```
+
+
+```{r}
+# Get the variance of the first 3 new dimensions.
+mtcars_pca$eig[,2][1:3]
+
+# Get the cumulative variance.
+mtcars_pca$eig[,3][1:3]
+
+```
+
+
+```{r}
+dimdesc(mtcars_pca, axes = 1:2)
+
+```
+
+```{r}
+
+# Trace variable contributions in mtcars_pca
+mtcars_pca$var$contrib
+```
+
+```{r}
+library(ade4)
+```
+
+```{r}
+mtcars_pca2 <- dudi.pca(mtcars, scannf = FALSE)
+
+summary(mtcars_pca2)
+```
+
+plotting contributions
+
+```{r}
+library(factoextra)
+fviz_pca_var(mtcars_pca,
+             col.var = "contrib",
+             gradient.cols = c("#bb2e00", "#002bbb"),
+             repel = TRUE)
+
+```
+
+contributions of selected variables
+```{r}
+fviz_pca_var(mtcars_pca,
+             select.var = list(contrib = 4),
+             repel = TRUE)
+
+```
+
+```{r}
+fviz_contrib(mtcars_pca,
+             choice = "var",
+             axes = 1,
+             top = 5)
+
+```
+
+how accurate the representation of our cariables on the PC plane are
+```{r}
+fviz_pca_ind(mtcars_pca,
+             col.ind = "cos2",
+             gradient.cols = c("#bb2e00", "#002bbb"),
+             repel = TRUE)
+
+```
+barrploting cos2 for individuals
+```{r}
+fviz_cos2(mtcars_pca,
+             choice = "ind",
+             axes = 1,
+             top = 10)
+
+```
+biplots
+
+```{r}
+fviz_pca_biplot(mtcars_pca)
+
+```
+
+adding ellipsoids
+
+```{r}
+mtcars$cyl <- as.factor(mtcars$cyl)
+
+fviz_pca_ind(mtcars_pca,
+             label = "var",
+             habillage = mtcars$cyl,
+             addEllipses = TRUE)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
