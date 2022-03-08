@@ -1,0 +1,343 @@
+---
+title: "EFA"
+author: "Lucas Mendicino"
+date: "11/16/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+EFA is preferable to PCA or N=NMF when the variables are ordinal, which is evident with most questionnaire items
+
+Steps to perfrom EFA
+- Check for data factorability
+- Extract factors
+- Choose the "right" number of factors to retain
+- Rotate factors
+- Interpret results
+
+```{r}
+library(psych)
+library(stats)
+library(GPArotation)
+```
+
+
+```{r}
+data(bfi)
+```
+
+5 factors behind 25 self report items
+Agreeabileness
+Conscientiousness
+Extraversion
+Neuroticism
+Openness
+```{r}
+describe(bfi[1:25])
+```
+
+```{r}
+sum(complete.cases(bfi[1:25]))
+```
+
+
+1. Check for data factorability
+Is there sufficient correlation among observed variables in the first palce to allow for dimensionality reduction? We cn check this using Bartlett's test of sphericity and the Kaiser-Meyer-Olkin measure of sampling adequacy
+
+Bartlett Sphericity: Hypothesis test evaluating whether or not the variables correlate. It compares the correlation matrix against the identity matrix (matrix with no correlations).
+
+```{r}
+cortest.bartlett(bfi[1:25])
+```
+
+
+The test is significant, and suggests the observed correlation matrix is significantly different from the identity matrix. This only reveals some of the variables are correlated with each other.
+
+Kaiser-Meyer-Olkin (KMO) test for sampling adequacy: Tests to see if the partial correlations in the data are close to zero. This will reveal if there is at least one latent factor within our variables. Let's look for an overall MSA (Measure of Sampling Adequacy) greater than 0.60
+
+
+```{r}
+KMO(bfi[1:25])
+```
+
+The KMO test statistic is 0.85, suggesting there is evidence of latent factors.
+
+The results of the Bartlett and KMO Tests recommend their is sufficient correlation among the observed variables and we can proceed with the factor analysis.
+
+
+2. Determine the Number of Factors
+
+We need to determine a parsimonious set of factors. The scree plot and parallel analysis are two methods to do so.
+
+Scree Plot: plots eigenvalues for all factors. Eigenvalues measure the amount of variance accounted for by a factor. We look at the scree plot for an "elbow" where the eigenvalues drop off sharply
+
+```{r}
+scree(bfi[,1:25])
+```
+
+The dotted line shows 3 factors and the solid line shows 5.
+
+Parallel Analysis: Plots the eigenvalues for the factors from the scree plot, and also generates random correlation matrices and after factor analyzing them, compares the resulting eigenvalues to the eigenvalues of the observed data. Observed eigenvalues that are higher than the corresponding random eigenvalues are more likely to be from important factors compared to eigenvalues that are below their random eigenvalue counterpart
+
+```{r}
+fa.parallel(bfi[1:25])
+```
+The blue lines show the observed eigenvalues from the scree plot and the red lines show the random eigenvalues. The parallel analysis shows 6 factors for both PC and FA. However, the 6th factor/component is very close to the line. We should inspect our analysis using 5 and 6 factors.
+
+
+
+
+EFA with 5 factors
+
+Minimum Residual extraction
+```{r}
+f_bfi_minres5 <- fa(bfi[1:25], nfactors = 5, max.iter = 100, rotate = "varimax")
+
+#sorted commonality and uniqueness
+f_bfi_minres_common5 <- sort(f_bfi_minres5$communality, decreasing =  TRUE)
+f_bfi_minres_unique5 <- sort(f_bfi_minres5$uniqueness, decreasing =  TRUE)
+
+data.frame(f_bfi_minres_common5)
+data.frame(f_bfi_minres_unique5)
+
+```
+N1: Get angry easily
+N3: Have frequent mood swings is most well-represented item within a three facotr EFA model
+
+
+
+Principal Axis Factoring
+```{r}
+f_bfi_pa5 <- fa(bfi[1:25], nfactors = 5, fm = "pa", max.iter = 100, rotate = "varimax")
+
+#sorted commonality and uniqueness
+f_bfi_pa_common5 <- sort(f_bfi_pa5$communality, decreasing =  TRUE)
+f_bfi_pa_unique5 <- sort(f_bfi_pa5$uniqueness, decreasing =  TRUE)
+
+data.frame(f_bfi_pa_common5)
+data.frame(f_bfi_pa_unique5)
+
+```
+
+
+```{r}
+fa.diagram(f_bfi_minres5)
+fa.diagram(f_bfi_pa5)
+```
+
+
+
+
+
+EFA with 6 factors
+
+Minimum Residual extraction
+```{r}
+f_bfi_minres6 <- fa(bfi[1:25], nfactors = 6, max.iter = 100, rotate = "varimax")
+
+#sorted commonality and uniqueness
+f_bfi_minres_common6 <- sort(f_bfi_minres6$communality, decreasing =  TRUE)
+f_bfi_minres_unique6 <- sort(f_bfi_minres6$uniqueness, decreasing =  TRUE)
+
+data.frame(f_bfi_minres_common6)
+data.frame(f_bfi_minres_unique6)
+
+```
+
+
+Principle Axis Factoring
+```{r}
+f_bfi_pa6 <- fa(bfi[1:25], nfactors = 6, fm = "pa", max.iter = 100, rotate = "varimax")
+
+#sorted commonality and uniqueness
+f_bfi_pa_common6 <- sort(f_bfi_pa6$communality, decreasing =  TRUE)
+f_bfi_pa_unique6 <- sort(f_bfi_pa6$uniqueness, decreasing =  TRUE)
+
+data.frame(f_bfi_pa_common6)
+data.frame(f_bfi_pa_unique6)
+
+```
+
+
+```{r}
+fa.diagram(f_bfi_minres6)
+fa.diagram(f_bfi_pa6)
+```
+It can be seen that there are no factor loadings to the 6th factor. Let's continue doing EFA with 5 factors.
+
+4. Rotate Factors
+
+
+```{r}
+f_bfi_min_res_varimax <- fa(bfi[1:25], fm = "minres", nfactors = 5, rotate = "varimax")
+
+f_bfi_pc_varimax <- fa(bfi[1:25], fm = "pa", nfactors = 5, rotate = "varimax")
+
+```
+
+```{r}
+load <- f_bfi_min_res_varimax$loadings[,1:2]
+plot(load,type="n") # set up plot
+text(load,labels = names(bfi[1:25]),cex=.7)
+
+```
+
+
+```{r}
+load <- f_bfi_pc_varimax$loadings[,1:2]
+plot(load,type="n") # set up plot
+text(load,labels = names(bfi[1:25]),cex=.7)
+
+```
+
+
+5. Interpretation
+
+
+
+Communalities
+
+The communality for each variable is the percentage of variance that can be explained by the retained factors.
+```{r}
+f_bfi_minres_varimax_common <- sort(f_bfi_min_res_varimax$communality, decreasing =  TRUE)
+
+f_bfi_pa_varimax_common <- sort(f_bfi_pc_varimax$communality, decreasing =  TRUE)
+
+data.frame(f_bfi_minres_varimax_common, f_bfi_pa_varimax_common)
+
+```
+
+
+Percentage of Variance accounted for
+
+
+```{r}
+100*f_bfi_min_res_varimax$e.values[1:5]/length(f_bfi_min_res_varimax$e.values)
+100*f_bfi_pc_varimax$e.values[1:5]/length(f_bfi_pc_varimax$e.values)
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
